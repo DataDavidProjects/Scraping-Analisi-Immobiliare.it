@@ -130,9 +130,9 @@ scraping_totale_progetti = pd.concat([join_progetti_unita(url) for url in proget
 
 
 # Save
-total_df.to_csv("./annunci_immobiliare_milano.csv",index=False,header=True)
-progetti.to_csv("./progetti_immobiliare_milano.csv",index=False,header=True)
-scraping_totale_progetti.to_csv("./progetti_unita_immobiliare_milano.csv",index=False,header=True)
+total_df.to_csv(".data/annunci_immobiliare_milano.csv",index=False,header=True)
+progetti.to_csv(".data/progetti_immobiliare_milano.csv",index=False,header=True)
+scraping_totale_progetti.to_csv(".data/progetti_unita_immobiliare_milano.csv",index=False,header=True)
 
 fine = time.time()
 tempo = fine - inizio
