@@ -38,7 +38,7 @@ def scrape_home_page_annunci(comune = "milano",n = n):
     return links
 
 
-links = pd.Series(scrape_home_page_annunci())
+
 
 
 def scrape_annuncio(url):
@@ -121,6 +121,7 @@ def join_progetti_unita(url):
         pass
 
 # Run
+links = pd.Series(scrape_home_page_annunci())
 total_df = pd.concat([ scrape_annuncio(url) for url in links],axis = 1).T
 # Normalize columns name lower case
 total_df.columns = [ i.lower() for i in total_df.columns.tolist() ]
