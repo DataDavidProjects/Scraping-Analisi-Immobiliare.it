@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd
 import numpy as np
+# Import datetime class from datetime module
+from datetime import datetime
+
+
+
 
 inizio = time.time()
 def controlled(link):
@@ -36,9 +41,6 @@ def scrape_home_page_annunci(comune = "milano",n = n):
                 l = controlled(tag['href'])
                 links.append(l)
     return links
-
-
-
 
 
 def scrape_annuncio(url):
@@ -130,10 +132,13 @@ progetti_links = progetti["link"].tolist()
 scraping_totale_progetti = pd.concat([join_progetti_unita(url) for url in progetti_links], axis = 0 ).reset_index(drop = True)
 
 
+
+# returns current date and time
+download_date = datetime.today()
 # Save
-total_df.to_csv("data/annunci_immobiliare_milano.csv",index=False,header=True)
-progetti.to_csv("data/progetti_immobiliare_milano.csv",index=False,header=True)
-scraping_totale_progetti.to_csv("data/progetti_unita_immobiliare_milano.csv",index=False,header=True)
+total_df.to_csv(f"data/annunci_immobiliare_milano_{download_date}.csv",index=False,header=True)
+progetti.to_csv(f"data/progetti_immobiliare_milano_{download_date}.csv",index=False,header=True)
+scraping_totale_progetti.to_csv(f"data/progetti_unita_immobiliare_milano_{download_date}.csv",index=False,header=True)
 
 fine = time.time()
 tempo = fine - inizio
