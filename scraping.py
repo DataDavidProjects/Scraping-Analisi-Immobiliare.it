@@ -44,54 +44,57 @@ def scrape_home_page_annunci(comune = "milano",n = n):
 
 
 def scrape_annuncio(url):
-    # Init
-    info_annuncio = pd.Series(dtype = "object",name = url)
+    try:
+        # Init
+        info_annuncio = pd.Series(dtype = "object",name = url)
 
-    # Link annuncio
-    info_annuncio["link"] = url
+        # Link annuncio
+        info_annuncio["link"] = url
 
-    # Estrai id annuncio
-    info_annuncio["id_annuncio"] = url.split("/")[-2]
+        # Estrai id annuncio
+        info_annuncio["id_annuncio"] = url.split("/")[-2]
 
-    # Estrazione raw info da url
-    content = requests.get(url)
-    soup = BeautifulSoup(content.text, "lxml")
+        # Estrazione raw info da url
+        content = requests.get(url)
+        soup = BeautifulSoup(content.text, "lxml")
 
-    # Estrai titolo
-    info_annuncio["titolo"] = soup.find("span", {'class': "im-titleBlock__title"}).text
+        # Estrai titolo
+        info_annuncio["titolo"] = soup.find("span", {'class': "im-titleBlock__title"}).text
 
-    # Estrai via
-    divTag = soup.find_all("span", {'class': "im-location"})
-    # trucco di codice per estrarre info
-    for n, info in enumerate(divTag[::-1]):
-        if n == 0:
-            info_annuncio["via"] = info.text
+        # Estrai via
+        divTag = soup.find_all("span", {'class': "im-location"})
+        # trucco di codice per estrarre info
+        for n, info in enumerate(divTag[::-1]):
+            if n == 0:
+                info_annuncio["via"] = info.text
 
-    # Estrai descrizione
-    divTag = soup.find_all("div", {'class': "im-readAll__container im-readAll__container--lessContent js-readAllContainer"})
-    info_annuncio["descrizione"] = " ".join([i.text.replace("\n","").replace("  ","") for i in divTag])
+        # Estrai descrizione
+        divTag = soup.find_all("div", {'class': "im-readAll__container im-readAll__container--lessContent js-readAllContainer"})
+        info_annuncio["descrizione"] = " ".join([i.text.replace("\n","").replace("  ","") for i in divTag])
 
-    # Estrai offerente
-    divTag = soup.find_all("div", {'class': "im-lead__reference"})
-    info_annuncio["offerente"] = " ".join([i.find("p").text for i in divTag][-1])
+        # Estrai offerente
+        divTag = soup.find_all("div", {'class': "im-lead__reference"})
+        info_annuncio["offerente"] = " ".join([i.find("p").text for i in divTag][-1])
 
-    # Estrai caratteristiche
-    divTag = soup.find_all("dd", {'class': "im-features__value"})
-    values = [i.text.replace("\n","").replace("  ","") for i in divTag]
-    divTag = soup.find_all("dt", {'class': "im-features__title"})
-    title =  [i.text.replace("\n","").replace("  ","") for i in divTag]
-    caratteristiche = pd.Series({ t:v for t,v in zip(title,values)})
-    info_annuncio = pd.concat([info_annuncio,caratteristiche],axis=0 )
+        # Estrai caratteristiche
+        divTag = soup.find_all("dd", {'class': "im-features__value"})
+        values = [i.text.replace("\n","").replace("  ","") for i in divTag]
+        divTag = soup.find_all("dt", {'class': "im-features__title"})
+        title =  [i.text.replace("\n","").replace("  ","") for i in divTag]
+        caratteristiche = pd.Series({ t:v for t,v in zip(title,values)})
+        info_annuncio = pd.concat([info_annuncio,caratteristiche],axis=0 )
 
-    # Estrai id unita abitative
-    divTag = soup.find_all("li", {'class':  "nd-list__item im-properties__item js-units-track"})
-    info_annuncio["id_unita_abitativa"] = [ i["data-track-id"]  for i in divTag]
+        # Estrai id unita abitative
+        divTag = soup.find_all("li", {'class':  "nd-list__item im-properties__item js-units-track"})
+        info_annuncio["id_unita_abitativa"] = [ i["data-track-id"]  for i in divTag]
 
-    # Link unita abitative
-    info_annuncio["link_unita_abitative"] = [ url+i for i in info_annuncio["id_unita_abitativa"] ]
+        # Link unita abitative
+        info_annuncio["link_unita_abitative"] = [ url+i for i in info_annuncio["id_unita_abitativa"] ]
 
 
-    return info_annuncio
+        return info_annuncio
+    except AttributeError as e :
+        print(f"{url} failed for the following issue:\n{e}")
 
 # to check
 def scrape_unita_da_progetto(url):
@@ -123,8 +126,14 @@ def join_progetti_unita(url):
         pass
 
 # Run
-links = pd.Series(scrape_home_page_annunci())
-total_df = pd.concat([ scrape_annuncio(url) for url in links],axis = 1).T
+links = pd.Series(scrape_home_page_annunci(comune="genova"))
+scraped = []
+for url in links:
+    try:
+        scraped.append(scrape_annuncio(url))
+    except:
+        print(url,"Failed, future version will try fix it")
+total_df = pd.concat(scraped,axis = 1).T
 # Normalize columns name lower case
 total_df.columns = [ i.lower() for i in total_df.columns.tolist() ]
 progetti = total_df.loc[total_df["tipologia"] == "Progetto"]
@@ -134,7 +143,7 @@ scraping_totale_progetti = pd.concat([join_progetti_unita(url) for url in proget
 
 
 # returns current date and time
-download_date = datetime.today()
+download_date = str(datetime.today().date())
 # Save
 total_df.to_csv(f"data/annunci_immobiliare_milano_{download_date}.csv",index=False,header=True)
 progetti.to_csv(f"data/progetti_immobiliare_milano_{download_date}.csv",index=False,header=True)
